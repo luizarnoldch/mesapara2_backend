@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SmayliAPI
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project Sub Name
+    Default: SmayliAPI
+  StageName:
+    Type: String
+    Description: Name of the deployment stage (e.g., dev, prod)
+    Default: dev
+
+Resources:
+  SmayliApi:
+    Type: 'AWS::Serverless::Api'
+    Properties:
+      StageName: !Ref StageName
+  GetAllUsersLambdaFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: ../bin/getallusers.zip
+      FunctionName: !Sub "${ProjectName}-getallusers"
+      Handler: bootstrap
+      Runtime: provided.al2
+      Events:
+        MyApiEvent:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: GET
+            RestApiId: !Ref SmayliApi
+Outputs:
+  LambdaEmailArnOutput:
+    Description: ARN of the GetAll Users Lambda Function
+    Value: !GetAtt GetAllUsersLambdaFunction.Arn
+  ApiUrl:
+    Description: URL de la API Gateway
+    Value: !Sub 'https://${SmayliApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
